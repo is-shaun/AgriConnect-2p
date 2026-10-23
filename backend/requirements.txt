@@ -1,0 +1,18 @@
+# Web / API
+Flask>=3.1,<4
+Flask-Cors>=5.0
+Flask-SQLAlchemy>=3.1,<4
+SQLAlchemy>=2.0.30,<2.1
+Flask-Migrate>=4.0
+Flask-JWT-Extended>=4.6,<5
+python-dotenv>=1.0
+# MySQL driver (cryptography is needed for MySQL 8 caching_sha2_password auth)
+PyMySQL>=1.1
+cryptography>=42
+# Machine learning (shared with ml/)
+pandas>=2.2
+numpy>=1.26
+scikit-learn>=1.5
+joblib>=1.4
+# Production WSGI server
+gunicorn>=22; platform_system != "Windows"

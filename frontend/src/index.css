@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+@theme {
+  --color-forest: #1f4d2b;
+  --color-forest-deep: #163a20;
+  --color-leaf: #3e9b4f;
+  --color-leaf-dark: #2f7d3d;
+  --color-sprout: #ddedcf;
+  --color-field: #f2f4ee;
+  --color-ink: #17261c;
+  --color-ink-soft: #4b5a4f;
+  --color-line: #d5dccf;
+  --color-mustard: #d9a521;
+  --color-mustard-soft: #fbf0cf;
+  --color-chalk: #eef3e6;
+  --color-danger: #b42318;
+  --color-danger-soft: #fdecea;
+
+  --font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Atkinson Hyperlegible", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --shadow-soft: 0 1px 2px rgb(23 38 28 / 0.06), 0 4px 16px -8px rgb(23 38 28 / 0.12);
+}
+
+@layer base {
+  html {
+    background: var(--color-field);
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.55;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
+    line-height: 1.12;
+    color: var(--color-ink);
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-leaf);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* The mandi board: the one bold element. A chalkboard price list as seen in market yards. */
+.mandi-board {
+  background:
+    radial-gradient(120% 80% at 10% 0%, rgb(255 255 255 / 0.05), transparent 60%),
+    var(--color-forest);
+  color: var(--color-chalk);
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 6px var(--color-forest-deep), 0 18px 40px -24px rgb(22 58 32 / 0.7);
+}
+.mandi-board .board-row {
+  border-bottom: 1px dashed rgb(238 243 230 / 0.18);
+}
+.mandi-board .board-row:last-child {
+  border-bottom: 0;
+}
+@keyframes board-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+.mandi-board {
+  animation: board-in 380ms ease-out both;
+}

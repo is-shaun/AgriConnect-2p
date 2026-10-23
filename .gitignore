@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+# Secrets
+.env
+.env.*
+!.env.example
+# Node
+node_modules/
+frontend/dist/
+# Local databases / logs
+*.db
+*.sqlite
+*.log
+# ML artifacts are reproducible: python ml/train.py
+ml/artifacts/*.joblib
+ml/artifacts/*.metrics.json
+!ml/artifacts/.gitkeep
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
