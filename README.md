@@ -172,39 +172,6 @@ Serve `frontend/dist` and proxy `/api` to Gunicorn from the same origin (e.g. Ng
 
 ---
 
-## API reference
-
-All responses are JSON. Errors always look like:
-```json
-{ "error": { "code": "validation_error", "message": "Some fields are invalid.", "details": { "email": "Enter a valid email address." } } }
-```
-List endpoints accept `page` and `per_page` (max 100) and return `{ "items": [...], "pagination": { "page", "per_page", "total", "pages" } }`. `sort=field` or `sort=-field` (descending) is whitelisted per endpoint.
-
-| Method | Path | Auth | Notes |
-|---|---|---|---|
-| POST | `/api/auth/register` | – | `{name, email, password}` → sets session cookie. 10/min per IP |
-| POST | `/api/auth/login` | – | `{email, password}`. 10/min per IP |
-| GET | `/api/auth/me` | ✓ | current user |
-| POST | `/api/auth/logout` | – | clears cookies |
-| GET | `/api/crops` | – | `q`, `category`, `sort=name|category`; includes record count, markets, latest average price |
-| GET | `/api/crops/:id` | – | crop + latest price per market |
-| GET | `/api/markets` | – | `state`, `district`, `crop_id` |
-| GET | `/api/prices` | – | `crop_id`, `location_id`, `q`, `state`, `district`, `date_from`, `date_to`, `is_demo`, `latest=true`; `sort=observation_date|modal_price|min_price|max_price|crop|market|state` |
-| GET | `/api/prices/:id` | – | one record |
-| GET | `/api/prices/history` | – | `crop_id` (required), `location_id`, `date_from`, `date_to`, `interval=week|day` |
-| GET | `/api/stats/summary` | – | counts for dashboard |
-| GET | `/api/predictions/model` | – | active model, horizons, held-out metrics |
-| POST | `/api/predictions` | ✓ + CSRF | `{crop_id, location_id, horizon_weeks}`. 30/min |
-| GET | `/api/predictions` | ✓ | your estimates only |
-| GET | `/api/predictions/:id` | ✓ | 404 unless it is yours |
-| GET / PATCH | `/api/users/me` | ✓ (+ CSRF for PATCH) | PATCH accepts `name`, `email`, `new_password` (+ `current_password` for email/password) |
-| POST | `/api/contact` | – | `{name, email, subject, message}`. 5 per 5 min |
-| GET | `/api/health` | – | DB and model status |
-
-Prediction error codes: `model_unavailable` (503), `unsupported_series` (422: crop/market not in the model), `insufficient_history` (422: fewer than 13 consecutive weeks), `not_found` (404). No fallback price is ever invented.
-
----
-
 ## Machine-learning pipeline
 
 Details in [ml/README.md](ml/README.md). In short:
@@ -231,20 +198,6 @@ Held-out test: MAE 102.6 vs 114.3 for the naive baseline (10.3% better); by hori
 
 ---
 
-## Security design
-
-- **Passwords** hashed with scrypt (Werkzeug); never logged or returned.
-- **Sessions**: JWT stored in an **HttpOnly, SameSite=Lax** cookie scoped to `/api/` (unreadable by JavaScript, so XSS cannot steal it). `Secure` flag on in production.
-- **CSRF**: double-submit token. State-changing requests must send the `csrf_access_token` cookie value in `X-CSRF-TOKEN`; the Axios client does this automatically.
-- **Same-origin by design**: the Vite dev server (and your production reverse proxy) serves `/api` from the frontend origin, so cookies are first-party. CORS is still restricted to `CORS_ORIGINS` with credentials.
-- **Authorization**: users can only read their own predictions; other users' IDs return 404 to avoid enumeration. Login errors don't reveal whether an email exists.
-- **Validation**: every endpoint validates server-side; unknown fields are rejected (no mass assignment of `role`, `user_id`, `predicted_price`, …). All DB access goes through SQLAlchemy (parameterised).
-- **Rate limiting** on auth, prediction, profile and contact endpoints; security headers (`nosniff`, `DENY` framing, `no-store`).
-- **Secrets** only from environment; production refuses to start with missing/short secrets or insecure cookies.
-- **Limitations**: logout clears cookies but a JWT copied before logout stays valid until it expires (8 h by default) since there is no server-side revocation list. The rate limiter is in-memory, per process; use Redis-backed limiting behind several workers.
-
----
-
 ## Testing
 
 ```bash
@@ -259,22 +212,6 @@ cd frontend && npm test
 ```
 
 What was actually run while building this project, and what was not, is listed in [docs/TESTING.md](docs/TESTING.md).
-
----
-
-## Troubleshooting
-
-| Problem | Fix |
-|---|---|
-| `RuntimeError: DATABASE_URL is not set` | Create `backend/.env` from `.env.example`. |
-| `Access denied for user` / `Can't connect to MySQL` | Check user, password, host and port in `DATABASE_URL`; make sure MySQL is running (`mysqladmin ping`). |
-| `RuntimeError: 'cryptography' package is required` | `pip install cryptography` (MySQL 8 default auth needs it). |
-| `/api/health` shows `model.available: false` | Run `python ml/train.py`. The API reloads the model automatically when the file changes. |
-| Estimates say "Retrain the model" | The model was built with older feature code or a different scikit-learn version; rerun `python ml/train.py`. |
-| Frontend shows "Cannot reach the AgriConnect server" | Start the backend on port 5000, or set `VITE_BACKEND_URL` in `frontend/.env`. |
-| Logged out immediately / CSRF errors | Open the app via `http://localhost:5173` (the proxy) rather than calling port 5000 directly from the browser; in production serve frontend and API from one origin. |
-| `429 Too Many Requests` | Wait the time shown; limits reset per minute. Set `RATE_LIMIT_ENABLED=false` only for local debugging. |
-| `npm install` errors about engines | Use Node.js 20.19+ or 22+. |
 
 ---
 
